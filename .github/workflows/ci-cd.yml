@@ -114,7 +114,7 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ${{secrets.DOCKERHUB_USERNAME }}/ecommerce-backend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-backend:latest
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
