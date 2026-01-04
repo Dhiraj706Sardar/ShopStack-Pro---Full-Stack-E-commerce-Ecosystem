@@ -87,12 +87,23 @@ jobs:
       - name: Start Services with Docker Compose
         run: |
           docker compose up -d --build
-          echo "Waiting for services to be healthy..."
-          sleep 40 # Increased wait time for MySQL
+          echo "Waiting for backend to be healthy..."
+          # Wait for backend to be healthy (up to 2 minutes)
+          for i in {1..24}; do
+            if curl -s http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              echo "Backend is UP!"
+              exit 0
+            fi
+            echo "Waiting... ($i)"
+            sleep 5
+          done
+          echo "Backend failed to start in time"
+          docker compose logs backend
+          exit 1
 
-      - name: Check Backend Health
+      - name: Check Backend Health (Final Check)
         run: |
-          curl -v -f http://localhost:8080/actuator/health || (docker compose logs backend && exit 1)
+          curl -v -f http://localhost:8080/actuator/health
 
       - name: Stop Services
         run: docker compose down
