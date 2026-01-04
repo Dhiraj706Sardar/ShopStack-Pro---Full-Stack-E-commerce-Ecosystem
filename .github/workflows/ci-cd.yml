@@ -71,6 +71,7 @@ jobs:
           DB_URL=jdbc:mysql://db:3306/ecommerce_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
           DB_USERNAME=root
           DB_PASSWORD=root
+          SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
           REDIS_HOST=redis
           REDIS_PORT=6379
           JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

@@ -13,12 +13,11 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test:
-        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -proot && mysql -u root -proot -e 'SELECT 1'"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 10
+      start_period: 40s
 
   backend:
     image: ecommerce-backend
