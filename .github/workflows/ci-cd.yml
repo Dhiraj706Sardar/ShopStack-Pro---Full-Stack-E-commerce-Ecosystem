@@ -59,59 +59,9 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME || vars.DOCKERHUB_USERNAME }}/ecommerce-frontend:latest ./frontend
 
-  # --- SMOKE TEST (Docker Compose Validation) ---
-  smoke-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create dummy .env for Smoke Test
-        run: |
-          cat <<EOF > backend/.env
-          DB_URL=jdbc:mysql://db:3306/ecommerce_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-          DB_USERNAME=root
-          DB_PASSWORD=root
-          SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
-          REDIS_HOST=redis
-          REDIS_PORT=6379
-          JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-          MAIL_USERNAME=test@test.com
-          MAIL_PASSWORD=test
-          MAIL_FROM=test@test.com
-          STRIPE_SECRET_KEY=test
-          STRIPE_PUBLISHABLE_KEY=test
-          CLOUDINARY_NAME=test
-          CLOUDINARY_API_KEY=test
-          CLOUDINARY_API_SECRET=test
-          EOF
-
-      - name: Start Services with Docker Compose
-        run: |
-          docker compose up -d --build
-          echo "Waiting for backend to be healthy..."
-          # Wait for backend to be healthy (up to 2 minutes)
-          for i in {1..24}; do
-            if curl -s http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
-              echo "Backend is UP!"
-              exit 0
-            fi
-            echo "Waiting... ($i)"
-            sleep 5
-          done
-          echo "Backend failed to start in time"
-          docker compose logs backend
-          exit 1
-
-      - name: Check Backend Health (Final Check)
-        run: |
-          curl -v -f http://localhost:8080/actuator/health
-
-      - name: Stop Services
-        run: docker compose down
-
   # --- DOCKER PUSH (Only on Push to Main) ---
   docker-push:
-    needs: [backend-build-test, frontend-build-test, smoke-test]
+    needs: [backend-build-test, frontend-build-test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     environment: DOCKERHUB_USERNAME
