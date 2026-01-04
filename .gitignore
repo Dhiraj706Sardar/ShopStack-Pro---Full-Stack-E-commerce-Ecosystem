@@ -1,0 +1,33 @@
+# Java
+backend/target/
+backend/*.jar
+backend/*.war
+backend/*.ear
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment Variables
+backend/.env
+frontend/.env
+
+# Docker
+backend_logs.txt
+
+# Images (Optional, keep if you want them in repo)
+# dummy.jpg
+# test.jpg

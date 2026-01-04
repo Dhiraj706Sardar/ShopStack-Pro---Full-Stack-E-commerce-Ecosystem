@@ -1,0 +1,50 @@
+package com.ecommerce.controller;
+
+import com.ecommerce.dto.LoginRequest;
+import com.ecommerce.dto.SignupRequest;
+import com.ecommerce.service.AuthService;
+import com.ecommerce.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.ecommerce.dto.MessageResponse;
+
+import org.springframework.http.HttpStatus;
+
+@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+        @Autowired
+        private AuthService authService;
+
+        @Autowired
+        private UserService userService;
+
+        @PostMapping("/signin")
+        public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+                return ResponseEntity.ok(authService.authenticateUser(loginRequest));
+        }
+
+        @PostMapping("/signup")
+        public ResponseEntity<MessageResponse> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+                return new ResponseEntity<>(authService.registerUser(signUpRequest), HttpStatus.CREATED);
+        }
+
+        @PostMapping("/forgot-password")
+        public ResponseEntity<?> forgotPassword(@RequestBody com.ecommerce.dto.ForgetPasswordRequest request) {
+                String token = userService.initiatePasswordReset(request.getEmail());
+                return ResponseEntity.ok(java.util.Map.of(
+                                "message", "Password reset token generated successfully",
+                                "token", token));
+        }
+
+        @PostMapping("/reset-password")
+        public ResponseEntity<?> resetPassword(@RequestBody com.ecommerce.dto.ResestPasswordRequest request) {
+                String result = userService.completePasswordReset(request.getToken(), request.getNewPassword());
+                return ResponseEntity.ok(java.util.Map.of("message", result));
+        }
+}
