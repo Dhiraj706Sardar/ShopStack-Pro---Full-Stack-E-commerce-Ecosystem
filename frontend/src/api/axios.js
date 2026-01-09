@@ -18,7 +18,15 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        const newAccessToken = response.headers['new-access-token'];
+        if (newAccessToken) {
+            localStorage.setItem('token', newAccessToken);
+            // Update the authorization header for subsequent requests in this instance
+            api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        }
+        return response;
+    },
     (error) => {
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
             const message = error.response.data?.message || '';

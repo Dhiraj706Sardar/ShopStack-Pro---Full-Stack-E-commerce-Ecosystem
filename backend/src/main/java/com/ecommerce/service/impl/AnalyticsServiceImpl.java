@@ -1,6 +1,7 @@
 package com.ecommerce.service.impl;
 
 import com.ecommerce.dto.AnalyticsDTO;
+import com.ecommerce.dto.ProductSalesDTO;
 import com.ecommerce.repository.OrderItemRepository;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.UserRepository;
@@ -35,8 +36,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         Long totalUsers = userRepository.count();
 
         List<Object[]> topProductsData = orderItemRepository.findTopSellingProducts(PageRequest.of(0, 5));
-        List<AnalyticsDTO.ProductSalesDTO> topProducts = topProductsData.stream()
-                .map(data -> new AnalyticsDTO.ProductSalesDTO(
+        List<ProductSalesDTO> topProducts = topProductsData.stream()
+                .map(data -> new ProductSalesDTO(
                         (String) data[0],
                         (Long) data[1],
                         (Double) data[2]))

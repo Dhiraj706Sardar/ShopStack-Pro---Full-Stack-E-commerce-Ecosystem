@@ -4,9 +4,13 @@ import com.ecommerce.dto.ProductDTO;
 import com.ecommerce.entity.Category;
 import com.ecommerce.entity.Product;
 import com.ecommerce.entity.User;
+import com.ecommerce.repository.CartItemRepository;
 import com.ecommerce.repository.CategoryRepository;
+import com.ecommerce.repository.OrderItemRepository;
 import com.ecommerce.repository.ProductRepository;
+import com.ecommerce.repository.ReviewRepository;
 import com.ecommerce.repository.UserRepository;
+import com.ecommerce.repository.WishlistRepository;
 import com.ecommerce.service.ProductService;
 import com.ecommerce.service.FileStorageService;
 import com.ecommerce.exception.ResourceNotFoundException;
@@ -45,16 +49,16 @@ public class ProductServiceImpl implements ProductService {
     private FileStorageService fileStorageService;
 
     @Autowired
-    private com.ecommerce.repository.WishlistRepository wishlistRepository;
+    private WishlistRepository wishlistRepository;
 
     @Autowired
-    private com.ecommerce.repository.ReviewRepository reviewRepository;
+    private ReviewRepository reviewRepository;
 
     @Autowired
-    private com.ecommerce.repository.CartItemRepository cartItemRepository;
+    private CartItemRepository cartItemRepository;
 
     @Autowired
-    private com.ecommerce.repository.OrderItemRepository orderItemRepository;
+    private OrderItemRepository orderItemRepository;
 
     @Override
     @Transactional

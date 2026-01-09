@@ -22,7 +22,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private UserRepository userRepository;
@@ -36,6 +35,17 @@ public class UserServiceImpl implements UserService {
     private JwtUtils jwtUtils;
 
     private com.ecommerce.service.EmailService emailService;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder encoder,
+            FileStorageService fileStorageService, PasswordResetRepository passwordResetRepository, JwtUtils jwtUtils,
+            com.ecommerce.service.EmailService emailService) {
+        this.userRepository = userRepository;
+        this.encoder = encoder;
+        this.fileStorageService = fileStorageService;
+        this.passwordResetRepository = passwordResetRepository;
+        this.jwtUtils = jwtUtils;
+        this.emailService = emailService;
+    }
 
     @Override
     public UserDTO getUserProfile(UUID userId) {
@@ -56,7 +66,12 @@ public class UserServiceImpl implements UserService {
                 user.setUsername(updateRequest.getUsername());
             }
             if (updateRequest.getEmail() != null && !updateRequest.getEmail().isBlank()) {
-                user.setEmail(updateRequest.getEmail());
+                if (!updateRequest.getEmail().equals(user.getEmail())) {
+                    if (userRepository.existsByEmail(updateRequest.getEmail())) {
+                        throw new com.ecommerce.exception.APIException("Error: Email is already in use!");
+                    }
+                    user.setEmail(updateRequest.getEmail());
+                }
             }
             if (updateRequest.getPassword() != null && !updateRequest.getPassword().isEmpty()) {
                 user.setPassword(encoder.encode(updateRequest.getPassword()));

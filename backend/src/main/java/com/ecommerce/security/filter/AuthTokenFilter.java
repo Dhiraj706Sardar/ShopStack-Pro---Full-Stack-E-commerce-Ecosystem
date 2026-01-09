@@ -29,46 +29,67 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
+    @Autowired
+    private com.ecommerce.service.RefreshTokenService refreshTokenService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
             String jwt = parseJwt(request);
             if (jwt != null) {
-                logger.debug("JWT found in request: {}", jwt);
-                if (jwtUtils.validateJwtToken(jwt)) {
-                    String email = jwtUtils.getEmailFromJwtToken(jwt);
-                    logger.debug("JWT validated for email: {}", email);
+                try {
+                    jwtUtils.validateJwtTokenThrows(jwt);
+                    authenticateUser(jwt, request);
+                } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                    logger.debug("JWT token is expired: {}", e.getMessage());
+                    // Try to refresh token using cookie
+                    String refreshToken = getRefreshTokenFromCookies(request);
+                    if (refreshToken != null) {
+                        try {
+                            com.ecommerce.entity.RefreshToken token = refreshTokenService.findByToken(refreshToken)
+                                    .map(refreshTokenService::verifyExpiration)
+                                    .orElse(null);
 
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    logger.debug("Authentication set in SecurityContext for: {}", email);
-                } else {
-                    logger.warn("JWT validation failed for token: {}", jwt);
+                            if (token != null) {
+                                String newAccessToken = jwtUtils.generateTokenFromUsername(token.getUser().getEmail());
+                                response.setHeader("New-Access-Token", newAccessToken);
+                                authenticateUser(newAccessToken, request);
+                                logger.debug("Token refreshed successfully for user: {}", token.getUser().getEmail());
+                            }
+                        } catch (Exception ex) {
+                            logger.error("Could not refresh token: {}", ex.getMessage());
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Cannot set user authentication: {}", e.getMessage());
                 }
-            } else {
-                logger.trace("No JWT found in request headers");
             }
-        } catch (UsernameNotFoundException e) {
-            if (e.getMessage().contains("banned")) {
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
-                return;
-            }
-            logger.error("Cannot set user authentication: {}", e.getMessage());
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void authenticateUser(String jwt, HttpServletRequest request) {
+        String email = jwtUtils.getEmailFromJwtToken(jwt);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private String getRefreshTokenFromCookies(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("refresh_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 
     private String parseJwt(HttpServletRequest request) {

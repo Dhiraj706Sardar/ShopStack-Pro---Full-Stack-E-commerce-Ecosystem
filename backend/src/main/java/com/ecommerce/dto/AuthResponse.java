@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class AuthResponse {
-    private String jwt;
+    private String accessToken;
     private String tokenType;
     private String message;
     private UUID id;
@@ -15,9 +15,14 @@ public class AuthResponse {
     private String email;
     private List<String> roles;
 
-    public AuthResponse(String jwt, String tokenType, String message, UUID id, String username, String email,
+    private String refreshToken;
+
+    public AuthResponse(String accessToken, String refreshToken, String tokenType, String message, UUID id,
+            String username,
+            String email,
             List<String> roles) {
-        this.jwt = jwt;
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
         this.tokenType = tokenType;
         this.message = message;
         this.id = id;

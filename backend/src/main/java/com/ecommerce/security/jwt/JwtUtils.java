@@ -26,8 +26,12 @@ public class JwtUtils {
 
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
+        return generateTokenFromUsername(userPrincipal.getEmail());
+    }
+
+    public String generateTokenFromUsername(String username) {
         return Jwts.builder()
-                .setSubject((userPrincipal.getEmail()))
+                .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
@@ -58,5 +62,10 @@ public class JwtUtils {
         }
 
         return false;
+    }
+
+    public void validateJwtTokenThrows(String authToken)
+            throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, IllegalArgumentException {
+        Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);
     }
 }

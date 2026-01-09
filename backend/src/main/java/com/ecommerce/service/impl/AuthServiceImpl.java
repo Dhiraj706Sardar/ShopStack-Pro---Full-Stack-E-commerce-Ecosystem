@@ -44,6 +44,9 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private JwtUtils jwtUtils;
 
+    @Autowired
+    private com.ecommerce.service.RefreshTokenService refreshTokenService;
+
     @Override
     public AuthResponse authenticateUser(LoginRequest loginRequest) {
         // Check if user exists and is active
@@ -66,7 +69,9 @@ public class AuthServiceImpl implements AuthService {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        return new AuthResponse(jwt, "Bearer", "Login successful",
+        com.ecommerce.entity.RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+
+        return new AuthResponse(jwt, refreshToken.getToken(), "Bearer", "Login successful",
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail(),
@@ -74,7 +79,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public MessageResponse registerUser(SignupRequest signUpRequest) {
+    public AuthResponse registerUser(SignupRequest signUpRequest) {
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             throw new APIException("Error: Email is already in use!");
         }
@@ -108,7 +113,26 @@ public class AuthServiceImpl implements AuthService {
         user.setRoles(roles);
         userRepository.save(user);
 
-        return new MessageResponse("User registered successfully!");
+        // Authenticate the user
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(signUpRequest.getEmail(),
+                        signUpRequest.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        List<String> userRoles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+        com.ecommerce.entity.RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+
+        return new AuthResponse(jwt, refreshToken.getToken(), "Bearer", "User registered successfully!",
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail(),
+                userRoles);
     }
 
     private Role getOrCreateRole(ERole roleName) {

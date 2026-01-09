@@ -17,12 +17,5 @@ public class AnalyticsDTO {
     private List<ProductSalesDTO> topProducts;
     private Map<String, Double> revenueByMonth;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProductSalesDTO {
-        private String productName;
-        private Long totalQuantity;
-        private Double totalRevenue;
-    }
+   
 }

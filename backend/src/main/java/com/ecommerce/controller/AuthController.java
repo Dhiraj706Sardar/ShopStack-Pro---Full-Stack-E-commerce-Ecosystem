@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.dto.MessageResponse;
+import com.ecommerce.dto.AuthResponse;
 
 import org.springframework.http.HttpStatus;
 
@@ -25,13 +26,37 @@ public class AuthController {
         private UserService userService;
 
         @PostMapping("/signin")
-        public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-                return ResponseEntity.ok(authService.authenticateUser(loginRequest));
+        public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
+                        jakarta.servlet.http.HttpServletResponse response) {
+                AuthResponse authResponse = authService.authenticateUser(loginRequest);
+
+                // Set Refresh Token Cookie
+                jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("refresh_token",
+                                authResponse.getRefreshToken());
+                cookie.setHttpOnly(true);
+                cookie.setSecure(false); // Set to true in production
+                cookie.setPath("/");
+                cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+                response.addCookie(cookie);
+
+                return ResponseEntity.ok(authResponse);
         }
 
         @PostMapping("/signup")
-        public ResponseEntity<MessageResponse> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-                return new ResponseEntity<>(authService.registerUser(signUpRequest), HttpStatus.CREATED);
+        public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest,
+                        jakarta.servlet.http.HttpServletResponse response) {
+                AuthResponse authResponse = authService.registerUser(signUpRequest);
+
+                // Set Refresh Token Cookie
+                jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("refresh_token",
+                                authResponse.getRefreshToken());
+                cookie.setHttpOnly(true);
+                cookie.setSecure(false); // Set to true in production
+                cookie.setPath("/");
+                cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+                response.addCookie(cookie);
+
+                return new ResponseEntity<>(authResponse, HttpStatus.CREATED);
         }
 
         @PostMapping("/forgot-password")

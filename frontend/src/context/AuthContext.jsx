@@ -35,21 +35,30 @@ export const AuthProvider = ({ children }) => {
         const response = await api.post('/auth/signin', { email, password });
         console.log('Login response data keys:', Object.keys(response.data));
         console.log('Full response data:', response.data);
-        const { jwt, ...userData } = response.data;
-        if (jwt) {
-            localStorage.setItem('token', jwt);
+        const { accessToken, refreshToken, ...userData } = response.data;
+        if (accessToken) {
+            localStorage.setItem('token', accessToken);
             localStorage.setItem('user', JSON.stringify(userData));
             setUser(userData);
-            console.log('Token and user saved to localStorage. Token length:', jwt.length);
+            console.log('Token and user saved to localStorage. Token length:', accessToken.length);
         } else {
-            console.error('No JWT found in response. Available keys:', Object.keys(response.data));
+            console.error('No Access Token found in response. Available keys:', Object.keys(response.data));
         }
         return userData;
     };
 
     const signup = async (username, email, password, role) => {
         const response = await api.post('/auth/signup', { username, email, password, role });
-        console.log(response.data);
+        console.log('Signup response:', response.data);
+
+        // Auto-login after signup
+        const { accessToken, refreshToken, ...userData } = response.data;
+        if (accessToken) {
+            localStorage.setItem('token', accessToken);
+            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
+        }
+
         return response.data;
     };
 
