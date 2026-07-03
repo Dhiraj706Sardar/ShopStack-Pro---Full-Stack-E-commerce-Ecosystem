@@ -58,6 +58,10 @@ The application will be available at:
 - **Backend API**: `http://localhost:8080`
 - **Actuator Health**: `http://localhost:8080/actuator/health`
 
+> Use `docker compose` with a space. The older Python-based `docker-compose`
+> command can crash with `KeyError: 'id'` while attaching to logs even when the
+> containers start correctly.
+
 ---
 
 ## 🧪 Testing
