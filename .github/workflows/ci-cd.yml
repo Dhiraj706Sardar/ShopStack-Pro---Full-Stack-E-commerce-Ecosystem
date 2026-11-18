@@ -93,6 +93,8 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME || vars.DOCKERHUB_USERNAME }}/ecommerce-frontend:latest
+          build-args: |
+            VITE_STRIPE_PUBLISHABLE_KEY=${{ vars.VITE_STRIPE_PUBLISHABLE_KEY || secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
 
   # --- GITHUB PAGES DEPLOYMENT ---
   deploy-frontend:
@@ -115,6 +117,7 @@ jobs:
           npm run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ vars.VITE_STRIPE_PUBLISHABLE_KEY || secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
       - name: Setup Pages
         uses: actions/configure-pages@v6
         with:

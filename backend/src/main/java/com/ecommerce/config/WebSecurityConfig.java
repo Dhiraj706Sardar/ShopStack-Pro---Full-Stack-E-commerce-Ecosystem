@@ -4,6 +4,7 @@ import com.ecommerce.security.UserDetailsServiceImpl;
 import com.ecommerce.security.filter.AuthTokenFilter;
 import com.ecommerce.security.jwt.AuthEntryPointJwt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,10 +23,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.config.Customizer;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
 public class WebSecurityConfig {
+    @Value("${app.cors.allowed-origins:http://localhost:3000,https://dhiraj706sardar.github.io}")
+    private String allowedOrigins;
+
     @Autowired
     UserDetailsServiceImpl userDetailsService;
 
@@ -83,8 +88,11 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000",
-                "https://dhiraj706sardar.github.io"));
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(
                 Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Origin", "Accept"));
