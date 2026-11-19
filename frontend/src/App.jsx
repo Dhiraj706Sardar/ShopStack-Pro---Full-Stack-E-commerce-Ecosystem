@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 
@@ -20,6 +20,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   console.log('ProtectedRoute check:', { hasUser: !!user, loading, requiredRoles: roles });
 
   if (loading) return (
@@ -30,12 +31,12 @@ const ProtectedRoute = ({ children, roles }) => {
 
   if (!user) {
     console.warn('ProtectedRoute: No user found, redirecting to login');
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (roles && !roles.some(role => user.roles.includes(role))) {
+  if (roles && !roles.some(role => user.roles?.includes(role))) {
     console.warn('ProtectedRoute: User does not have required roles:', roles);
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -105,5 +106,6 @@ function App() {
     </AuthProvider>
   );
 }
+
 
 export default App;

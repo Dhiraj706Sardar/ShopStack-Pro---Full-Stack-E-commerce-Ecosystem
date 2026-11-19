@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
@@ -10,14 +10,24 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
         try {
-            await login(email, password);
-            navigate('/');
+            const userData = await login(email, password);
+            const redirectPath = location.state?.from?.pathname;
+            if (redirectPath && redirectPath !== '/') {
+                navigate(redirectPath);
+            } else if (userData?.roles?.includes('ROLE_ADMIN')) {
+                navigate('/admin');
+            } else if (userData?.roles?.includes('ROLE_SELLER')) {
+                navigate('/seller');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid email or password');
         } finally {

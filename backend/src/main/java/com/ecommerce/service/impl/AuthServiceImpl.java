@@ -93,15 +93,18 @@ public class AuthServiceImpl implements AuthService {
         Set<String> strRoles = signUpRequest.getRole();
         Set<Role> roles = new HashSet<>();
 
-        if (strRoles == null) {
+        if (strRoles == null || strRoles.isEmpty()) {
             roles.add(getOrCreateRole(ERole.ROLE_USER));
         } else {
             for (String role : strRoles) {
-                switch (role) {
+                if (role == null) continue;
+                String normalized = role.trim().toLowerCase().replace("role_", "");
+                switch (normalized) {
                     case "admin":
                         roles.add(getOrCreateRole(ERole.ROLE_ADMIN));
                         break;
                     case "seller":
+                    case "merchant":
                         roles.add(getOrCreateRole(ERole.ROLE_SELLER));
                         break;
                     default:
