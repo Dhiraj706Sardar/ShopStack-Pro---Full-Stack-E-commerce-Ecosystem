@@ -14,7 +14,6 @@ import com.ecommerce.dto.AuthResponse;
 
 import org.springframework.http.HttpStatus;
 
-@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
