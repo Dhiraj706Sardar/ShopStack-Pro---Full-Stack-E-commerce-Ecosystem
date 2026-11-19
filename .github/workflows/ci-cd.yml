@@ -120,8 +120,10 @@ jobs:
           npm ci
           npm run build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
-          VITE_STRIPE_PUBLISHABLE_KEY: ${{ vars.VITE_STRIPE_PUBLISHABLE_KEY || secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          # VITE_API_URL and VITE_STRIPE_PUBLISHABLE_KEY are sourced from
+          # frontend/.env.production committed in the repo.
+          # Override via GitHub vars/secrets when deploying to a different domain.
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL || 'https://shopstack-api.duckdns.org/api' }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
