@@ -287,7 +287,7 @@ const ProductListingPage = () => {
                             Live Catalog Explorer
                         </div>
                         <h1 className="text-3xl sm:text-4xl font-black tracking-tight mt-1">
-                            {selectedCategory 
+                            {selectedCategory
                                 ? `${categories.find(c => c.id === selectedCategory)?.name || 'Filtered'} Department`
                                 : 'All Products'}
                         </h1>
@@ -340,11 +340,10 @@ const ProductListingPage = () => {
                                 <button
                                     key={size}
                                     onClick={() => handlePageSizeChange(size)}
-                                    className={`px-2 py-1 rounded-lg transition-colors ${
-                                        pageSize === size
+                                    className={`px-2 py-1 rounded-lg transition-colors ${pageSize === size
                                             ? 'bg-primary text-primary-foreground font-black'
                                             : 'hover:bg-muted text-foreground'
-                                    }`}
+                                        }`}
                                 >
                                     {size}
                                 </button>
@@ -357,11 +356,10 @@ const ProductListingPage = () => {
                 <div className="flex gap-2 overflow-x-auto pb-1 pt-1 no-scrollbar">
                     <button
                         onClick={() => handleCategoryChange('')}
-                        className={`shrink-0 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-                            !selectedCategory
+                        className={`shrink-0 rounded-xl px-4 py-2 text-xs font-bold transition-all ${!selectedCategory
                                 ? 'bg-primary text-primary-foreground shadow-sm'
                                 : 'border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50'
-                        }`}
+                            }`}
                     >
                         All Categories
                     </button>
@@ -371,11 +369,10 @@ const ProductListingPage = () => {
                             <button
                                 key={cat.id}
                                 onClick={() => handleCategoryChange(cat.id)}
-                                className={`shrink-0 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-                                    isSelected
+                                className={`shrink-0 rounded-xl px-4 py-2 text-xs font-bold transition-all ${isSelected
                                         ? 'bg-primary text-primary-foreground shadow-sm'
                                         : 'border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50'
-                                }`}
+                                    }`}
                             >
                                 {cat.name}
                             </button>
@@ -460,11 +457,10 @@ const ProductListingPage = () => {
                                         onClick={(e) => handleToggleWishlist(e, product)}
                                         disabled={isFavLoading}
                                         aria-label="Save to wishlist"
-                                        className={`absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all shadow-md ${
-                                            isFav
+                                        className={`absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all shadow-md ${isFav
                                                 ? 'bg-rose-500 text-white'
                                                 : 'bg-white/80 dark:bg-slate-900/80 text-foreground hover:scale-110'
-                                        }`}
+                                            }`}
                                     >
                                         <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
                                     </button>
@@ -512,11 +508,10 @@ const ProductListingPage = () => {
                                             type="button"
                                             onClick={(e) => handleAddToCart(e, product)}
                                             disabled={isAdding}
-                                            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all shadow-sm ${
-                                                isAdded
+                                            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all shadow-sm ${isAdded
                                                     ? 'bg-emerald-600 text-white'
                                                     : 'bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95'
-                                            }`}
+                                                }`}
                                         >
                                             {isAdding ? (
                                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -588,11 +583,10 @@ const ProductListingPage = () => {
                                 <button
                                     key={item}
                                     onClick={() => handlePageChange(item)}
-                                    className={`h-9 w-9 sm:h-10 sm:w-10 rounded-xl text-xs sm:text-sm font-black transition-all ${
-                                        isCurrent
+                                    className={`h-9 w-9 sm:h-10 sm:w-10 rounded-xl text-xs sm:text-sm font-black transition-all ${isCurrent
                                             ? 'bg-primary text-primary-foreground shadow-md scale-105'
                                             : 'border hover:bg-muted text-foreground'
-                                    }`}
+                                        }`}
                                 >
                                     {item + 1}
                                 </button>
