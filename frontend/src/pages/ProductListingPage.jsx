@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
-import { useAuth } from '../context/AuthContext'; // Assuming AuthContext is in this path
 
 const ProductListingPage = () => {
     const [products, setProducts] = useState([]);
@@ -12,8 +11,6 @@ const ProductListingPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const { user } = useAuth();
-    const navigate = useNavigate();
 
     useEffect(() => {
         fetchCategories();

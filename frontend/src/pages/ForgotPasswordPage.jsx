@@ -53,8 +53,7 @@ const ForgotPasswordPage = () => {
                             <CheckCircle2 className="h-16 w-16 text-green-500" />
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            We've sent a password reset link to <span className="font-bold text-foreground">{email}</span>.
-                            Please check your inbox and follow the instructions.
+                            {message || `We've sent a password reset link to ${email}. Please check your inbox and follow the instructions.`}
                         </p>
                         <div className="pt-4">
                             <Link

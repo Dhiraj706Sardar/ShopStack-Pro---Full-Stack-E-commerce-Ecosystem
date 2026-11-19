@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
         const response = await api.post('/auth/signin', { email, password });
         console.log('Login response data keys:', Object.keys(response.data));
         console.log('Full response data:', response.data);
-        const { accessToken, refreshToken, ...userData } = response.data;
+        const { accessToken, ...userData } = response.data;
         if (accessToken) {
             localStorage.setItem('token', accessToken);
             localStorage.setItem('user', JSON.stringify(userData));
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
         console.log('Signup response:', response.data);
 
         // Auto-login after signup
-        const { accessToken, refreshToken, ...userData } = response.data;
+        const { accessToken, ...userData } = response.data;
         if (accessToken) {
             localStorage.setItem('token', accessToken);
             localStorage.setItem('user', JSON.stringify(userData));

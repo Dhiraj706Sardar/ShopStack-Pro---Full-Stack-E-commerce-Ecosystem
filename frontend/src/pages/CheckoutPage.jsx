@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { CreditCard, MapPin, Truck, CheckCircle2, Loader2, ArrowLeft, ShoppingBag, DollarSign } from 'lucide-react';
+import { CreditCard, MapPin, Truck, CheckCircle2, Loader2, ArrowLeft, ShoppingBag, DollarSign, AlertCircle } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import StripePaymentForm from '../components/StripePaymentForm';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 const CheckoutPage = () => {
     const [shippingAddress, setShippingAddress] = useState('');
     const [loading, setLoading] = useState(false);
+    const [loadingCart, setLoadingCart] = useState(true);
     const [success, setSuccess] = useState(false);
     const [orderData, setOrderData] = useState(null);
     const [cartTotal, setCartTotal] = useState(0);
     const [step, setStep] = useState('address'); // 'address' or 'payment'
     const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'cod'
+    const [orderError, setOrderError] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -23,29 +26,34 @@ const CheckoutPage = () => {
     }, []);
 
     const fetchCartTotal = async () => {
+        setLoadingCart(true);
         try {
             const response = await api.get('/user/cart');
-            setCartTotal(response.data.totalPrice);
+            setCartTotal(response.data?.totalPrice || 0);
         } catch (error) {
             console.error('Error fetching cart:', error);
+        } finally {
+            setLoadingCart(false);
         }
     };
 
     const handleCreateOrder = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setOrderError('');
         try {
             const response = await api.post(`/user/orders?shippingAddress=${encodeURIComponent(shippingAddress)}`);
             setOrderData(response.data);
             setStep('payment');
         } catch (error) {
             console.error('Order creation failed:', error);
+            setOrderError(error.response?.data?.message || 'Failed to initialize order. Please ensure your cart has items.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handlePaymentSuccess = async (paymentIntent) => {
+    const handlePaymentSuccess = async (_paymentIntent) => {
         setSuccess(true);
         // Update order status to PAID on backend
         try {
@@ -81,6 +89,26 @@ const CheckoutPage = () => {
         </div>
     );
 
+    if (!loadingCart && cartTotal === 0 && !orderData) {
+        return (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+                <div className="rounded-full bg-muted p-8 text-muted-foreground mb-6 shadow-sm">
+                    <ShoppingBag className="h-16 w-16" />
+                </div>
+                <h2 className="text-3xl font-black tracking-tight">Your Cart is Empty</h2>
+                <p className="mt-2 text-muted-foreground max-w-md">
+                    You don't have any items in your cart to checkout. Browse our catalog to add products.
+                </p>
+                <button
+                    onClick={() => navigate('/products')}
+                    className="mt-8 rounded-full bg-primary px-8 py-4 font-bold text-primary-foreground transition-transform hover:scale-105 shadow-lg"
+                >
+                    Browse Catalog
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col gap-10 pb-20">
             <div className="flex items-center justify-between">
@@ -104,6 +132,13 @@ const CheckoutPage = () => {
                                     <h2>Where should we send it?</h2>
                                 </div>
                                 <p className="text-muted-foreground">Please provide your full delivery address below.</p>
+
+                                {orderError && (
+                                    <div className="rounded-xl bg-destructive/10 p-4 text-center text-sm font-medium text-destructive">
+                                        {orderError}
+                                    </div>
+                                )}
+
                                 <textarea
                                     required
                                     value={shippingAddress}
@@ -186,14 +221,29 @@ const CheckoutPage = () => {
                                 </div>
 
                                 {paymentMethod === 'card' ? (
-                                    <Elements stripe={stripePromise}>
-                                        <StripePaymentForm
-                                            amount={orderData.totalAmount}
-                                            orderId={orderData.id}
-                                            onPaymentSuccess={handlePaymentSuccess}
-                                            onPaymentError={(err) => console.error(err)}
-                                        />
-                                    </Elements>
+                                    stripePromise ? (
+                                        <Elements stripe={stripePromise}>
+                                            <StripePaymentForm
+                                                amount={orderData.totalAmount}
+                                                orderId={orderData.id}
+                                                onPaymentSuccess={handlePaymentSuccess}
+                                                onPaymentError={(err) => console.error(err)}
+                                            />
+                                        </Elements>
+                                    ) : (
+                                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 space-y-3">
+                                            <div className="flex items-center gap-2 font-bold text-base">
+                                                <AlertCircle className="h-5 w-5 text-amber-600" />
+                                                <span>Stripe Card Payments Unavailable</span>
+                                            </div>
+                                            <p className="text-sm text-amber-800">
+                                                Stripe publishable key is not configured (<code className="bg-amber-100 px-1.5 py-0.5 rounded text-xs font-mono">VITE_STRIPE_PUBLISHABLE_KEY</code>).
+                                            </p>
+                                            <p className="text-sm text-amber-800">
+                                                You can complete your checkout right now by selecting <strong>Cash on Delivery (COD)</strong> above.
+                                            </p>
+                                        </div>
+                                    )
                                 ) : (
                                     <button
                                         onClick={handleCODPayment}

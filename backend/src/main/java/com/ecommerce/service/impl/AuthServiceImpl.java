@@ -112,6 +112,8 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
         }
+        // Ensure every user has base ROLE_USER for shopping/cart/orders
+        roles.add(getOrCreateRole(ERole.ROLE_USER));
 
         user.setRoles(roles);
         userRepository.save(user);
