@@ -226,27 +226,37 @@ WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'merchant@gmail.com');""")
     # Customer User
     sql.append(f"""INSERT INTO users (id, username, email, password, is_active, profile_image_url, created_at, updated_at)
 SELECT '{CUSTOMER_USER_ID}', 'user', 'user@gmail.com', '{USER_PW_HASH}', true, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'user@gmail.com');\n""")
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'user@gmail.com');""")
+
+    # Ensure passwords and active flags are strictly up to date
+    sql.append(f"UPDATE users SET password = '{ADMIN_PW_HASH}', is_active = true WHERE email = 'admin@gmail.com';")
+    sql.append(f"UPDATE users SET password = '{MERCHANT_PW_HASH}', is_active = true WHERE email = 'merchant@gmail.com';")
+    sql.append(f"UPDATE users SET password = '{USER_PW_HASH}', is_active = true WHERE email = 'user@gmail.com';\n")
 
     # 3. USER_ROLES
-    sql.append("-- 3. USER_ROLES")
-    # Admin gets ROLE_ADMIN + ROLE_USER
-    sql.append(f"INSERT INTO user_roles (user_id, role_id) SELECT '{ADMIN_USER_ID}', '{ROLE_ADMIN_ID}' WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = '{ADMIN_USER_ID}' AND role_id = '{ROLE_ADMIN_ID}');")
-    sql.append(f"INSERT INTO user_roles (user_id, role_id) SELECT '{ADMIN_USER_ID}', '{ROLE_USER_ID}' WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = '{ADMIN_USER_ID}' AND role_id = '{ROLE_USER_ID}');")
-    
-    # Merchant gets ROLE_SELLER + ROLE_USER
-    sql.append(f"INSERT INTO user_roles (user_id, role_id) SELECT '{MERCHANT_USER_ID}', '{ROLE_SELLER_ID}' WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = '{MERCHANT_USER_ID}' AND role_id = '{ROLE_SELLER_ID}');")
-    sql.append(f"INSERT INTO user_roles (user_id, role_id) SELECT '{MERCHANT_USER_ID}', '{ROLE_USER_ID}' WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = '{MERCHANT_USER_ID}' AND role_id = '{ROLE_USER_ID}');")
+    sql.append("-- 3. USER_ROLES (Dynamically linked to prevent foreign key issues)")
+    sql.append("""INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u CROSS JOIN roles r
+WHERE u.email = 'admin@gmail.com' AND r.name IN ('ROLE_ADMIN', 'ROLE_USER')
+AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = u.id AND ur.role_id = r.id);
 
-    # Customer gets ROLE_USER
-    sql.append(f"INSERT INTO user_roles (user_id, role_id) SELECT '{CUSTOMER_USER_ID}', '{ROLE_USER_ID}' WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = '{CUSTOMER_USER_ID}' AND role_id = '{ROLE_USER_ID}');\n")
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u CROSS JOIN roles r
+WHERE u.email = 'merchant@gmail.com' AND r.name IN ('ROLE_SELLER', 'ROLE_USER')
+AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = u.id AND ur.role_id = r.id);
+
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u CROSS JOIN roles r
+WHERE u.email = 'user@gmail.com' AND r.name = 'ROLE_USER'
+AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = u.id AND ur.role_id = r.id);
+""")
 
     # 4. CATEGORIES
     sql.append("-- 4. CATEGORIES")
     for cat in CATEGORIES:
         sql.append(f"""INSERT INTO categories (id, name, description)
 SELECT '{cat['id']}', '{escape_sql(cat['name'])}', '{escape_sql(cat['desc'])}'
-WHERE NOT EXISTS (SELECT 1 FROM categories WHERE id = '{cat['id']}');""")
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = '{escape_sql(cat['name'])}');""")
     sql.append("")
 
     # 5. PRODUCTS (At least 1,000 products: 130 per category * 8 categories = 1,040 products)
@@ -259,43 +269,42 @@ WHERE NOT EXISTS (SELECT 1 FROM categories WHERE id = '{cat['id']}');""")
         brands = cat['brands']
         types = cat['types']
         specs = cat['specs']
+        min_p, max_p = cat['price_range']
         images = cat['images']
-        p_min, p_max = cat['price_range']
 
-        # 130 products per category
-        for i in range(130):
-            prod_id = make_uuid('2', product_counter)
-            if product_counter <= 20:
-                sample_product_ids.append(prod_id)
+        for item_idx in range(130):
+            p_id = make_uuid('2', product_counter)
+            if len(sample_product_ids) < 30:
+                sample_product_ids.append(p_id)
 
-            brand = brands[i % len(brands)]
-            ptype = types[(i * 3 + cat_idx) % len(types)]
-            spec = specs[(i * 2 + cat_idx) % len(specs)]
-            img = images[i % len(images)]
+            brand = brands[item_idx % len(brands)]
+            ptype = types[item_idx % len(types)]
+            spec = specs[(item_idx + cat_idx) % len(specs)]
+            image = images[(item_idx * 3 + cat_idx) % len(images)]
 
-            name = f"{brand} {ptype} - Edition {((i % 7) + 1):02d}"
+            name = f"{brand} {ptype} - Edition {(item_idx % 20) + 1:02d}"
             desc = f"Engineered by {brand}. The {ptype} comes equipped {spec}. Designed for superior performance, premium durability, and daily reliability."
             
             # Deterministic price calculation
-            base_price = p_min + ((p_max - p_min) * ((i * 17 + 23) % 100) / 100.0)
-            price = round(base_price, 2)
-            
-            # Stock: few low stocks (2-5) for merchant low-stock alert testing, rest 15-200
-            if i % 25 == 0:
-                stock = random.choice([2, 3, 4, 5])
-            else:
-                stock = 15 + ((i * 13) % 180)
+            price_step = (max_p - min_p) / 130.0
+            price = round(min_p + (price_step * item_idx) + ((item_idx % 7) * 3.1), 2)
+            if price > max_p:
+                price = round(max_p - (item_idx % 5), 2)
+
+            stock = 15 + ((item_idx * 13) % 85)
 
             sql.append(f"""INSERT INTO products (id, name, description, price, stock_quantity, image_url, category_id, seller_id, created_at, updated_at)
-SELECT '{prod_id}', '{escape_sql(name)}', '{escape_sql(desc)}', {price}, {stock}, '{img}', '{cat_id}', '{MERCHANT_USER_ID}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM products WHERE id = '{prod_id}');""")
-
+SELECT '{p_id}', '{escape_sql(name)}', '{escape_sql(desc)}', {price}, {stock}, '{image}', 
+       COALESCE((SELECT id FROM categories WHERE name = '{escape_sql(cat['name'])}' LIMIT 1), '{cat_id}'::uuid), 
+       COALESCE((SELECT id FROM users WHERE email = 'merchant@gmail.com' LIMIT 1), '{MERCHANT_USER_ID}'::uuid), 
+       CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM products WHERE id = '{p_id}');""")
             product_counter += 1
 
-    sql.append(f"\n-- Total Products Seeded: {product_counter - 1}\n")
+    sql.append("")
 
-    # 6. REVIEWS (Sample ratings & reviews for top products)
-    sql.append("-- 6. PRODUCT REVIEWS (For Customer Feedback & Rating Demonstration)")
+    # 6. REVIEWS
+    sql.append("-- 6. VERIFIED REVIEWS & RATINGS")
     reviews_data = [
         ("Outstanding product! Exceeded all my expectations. Build quality is top-notch.", 5),
         ("Very satisfied with the performance and design. Would definitely recommend to colleagues.", 5),
@@ -308,7 +317,9 @@ WHERE NOT EXISTS (SELECT 1 FROM products WHERE id = '{prod_id}');""")
         rev_id = make_uuid('3', r_idx + 1)
         comment, rating = reviews_data[r_idx % len(reviews_data)]
         sql.append(f"""INSERT INTO reviews (id, comment, rating, user_id, product_id, created_at)
-SELECT '{rev_id}', '{escape_sql(comment)}', {rating}, '{CUSTOMER_USER_ID}', '{p_id}', CURRENT_TIMESTAMP
+SELECT '{rev_id}', '{escape_sql(comment)}', {rating}, 
+       COALESCE((SELECT id FROM users WHERE email = 'user@gmail.com' LIMIT 1), '{CUSTOMER_USER_ID}'::uuid), 
+       '{p_id}', CURRENT_TIMESTAMP
 WHERE NOT EXISTS (SELECT 1 FROM reviews WHERE id = '{rev_id}');""")
 
     sql.append("")
@@ -334,7 +345,9 @@ WHERE NOT EXISTS (SELECT 1 FROM reviews WHERE id = '{rev_id}');""")
     for o_idx, (status, addr, total, items) in enumerate(orders_spec):
         order_id = make_uuid('4', o_idx + 1)
         sql.append(f"""INSERT INTO orders (id, user_id, total_amount, status, shipping_address, order_date)
-SELECT '{order_id}', '{CUSTOMER_USER_ID}', {total}, '{status}', '{escape_sql(addr)}', CURRENT_TIMESTAMP - INTERVAL '{o_idx * 3 + 1} days'
+SELECT '{order_id}', 
+       COALESCE((SELECT id FROM users WHERE email = 'user@gmail.com' LIMIT 1), '{CUSTOMER_USER_ID}'::uuid), 
+       {total}, '{status}', '{escape_sql(addr)}', CURRENT_TIMESTAMP - INTERVAL '{o_idx * 3 + 1} days'
 WHERE NOT EXISTS (SELECT 1 FROM orders WHERE id = '{order_id}');""")
 
         for it_idx, (p_id, qty, price) in enumerate(items):
@@ -353,8 +366,10 @@ WHERE NOT EXISTS (SELECT 1 FROM order_items WHERE id = '{item_id}');""")
     cart_total = 299.99 + 79.99
 
     sql.append(f"""INSERT INTO carts (id, user_id, total_price)
-SELECT '{cart_id}', '{CUSTOMER_USER_ID}', {cart_total}
-WHERE NOT EXISTS (SELECT 1 FROM carts WHERE user_id = '{CUSTOMER_USER_ID}');""")
+SELECT '{cart_id}', 
+       COALESCE((SELECT id FROM users WHERE email = 'user@gmail.com' LIMIT 1), '{CUSTOMER_USER_ID}'::uuid), 
+       {cart_total}
+WHERE NOT EXISTS (SELECT 1 FROM carts WHERE user_id = COALESCE((SELECT id FROM users WHERE email = 'user@gmail.com' LIMIT 1), '{CUSTOMER_USER_ID}'::uuid));""")
 
     c_item1 = make_uuid('7', 1)
     c_item2 = make_uuid('7', 2)
@@ -371,8 +386,9 @@ WHERE NOT EXISTS (SELECT 1 FROM cart_items WHERE id = '{c_item2}');\n""")
     sql.append("-- 9. CUSTOMER WISHLIST")
     wishlist_id = make_uuid('8', 1)
     sql.append(f"""INSERT INTO wishlists (id, user_id)
-SELECT '{wishlist_id}', '{CUSTOMER_USER_ID}'
-WHERE NOT EXISTS (SELECT 1 FROM wishlists WHERE user_id = '{CUSTOMER_USER_ID}');""")
+SELECT '{wishlist_id}', 
+       COALESCE((SELECT id FROM users WHERE email = 'user@gmail.com' LIMIT 1), '{CUSTOMER_USER_ID}'::uuid)
+WHERE NOT EXISTS (SELECT 1 FROM wishlists WHERE user_id = COALESCE((SELECT id FROM users WHERE email = 'user@gmail.com' LIMIT 1), '{CUSTOMER_USER_ID}'::uuid));""")
 
     for w_idx in [1, 2, 6]:
         p_id = sample_product_ids[w_idx]
@@ -389,6 +405,9 @@ if __name__ == '__main__':
         f.write(content)
     with open('seed_data.sql', 'w') as f:
         f.write(content)
+    with open('sample_data.sql', 'w') as f:
+        f.write(content)
     print("Successfully generated 1,040 products and full seed ecosystem into:")
     print(" - backend/src/main/resources/data.sql")
     print(" - seed_data.sql")
+    print(" - sample_data.sql")
