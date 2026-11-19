@@ -259,7 +259,7 @@ const UserHomePage = () => {
                         </h1>
 
                         <p className="max-w-xl text-base text-slate-300 sm:text-lg leading-relaxed">
-                            Discover designer fashion, next-gen electronics, home aesthetics, and certified wellness. 
+                            Discover designer fashion, next-gen electronics, home aesthetics, and certified wellness.
                             Curated directly from verified merchants with zero compromises on quality.
                         </p>
 
@@ -411,11 +411,10 @@ const UserHomePage = () => {
                     {/* "All" Category Pill */}
                     <button
                         onClick={() => setSelectedCategory(null)}
-                        className={`flex shrink-0 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm font-bold transition-all ${
-                            selectedCategory === null
+                        className={`flex shrink-0 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm font-bold transition-all ${selectedCategory === null
                                 ? 'border-primary bg-primary text-primary-foreground shadow-lg scale-105'
                                 : 'border-border bg-card text-foreground hover:border-primary/50 hover:bg-muted/50'
-                        }`}
+                            }`}
                     >
                         <LayoutGrid className="h-5 w-5" />
                         <span>All Products</span>
@@ -432,11 +431,10 @@ const UserHomePage = () => {
                             <button
                                 key={cat.id}
                                 onClick={() => setSelectedCategory(cat.id)}
-                                className={`flex shrink-0 items-center gap-2.5 rounded-2xl border px-5 py-3.5 text-sm font-bold transition-all ${
-                                    isSelected
+                                className={`flex shrink-0 items-center gap-2.5 rounded-2xl border px-5 py-3.5 text-sm font-bold transition-all ${isSelected
                                         ? 'border-primary bg-primary text-primary-foreground shadow-lg scale-105'
                                         : 'border-border bg-card text-foreground hover:border-primary/50 hover:bg-muted/50'
-                                }`}
+                                    }`}
                             >
                                 <IconComponent className="h-5 w-5" />
                                 <span>{cat.name}</span>
@@ -499,7 +497,7 @@ const UserHomePage = () => {
                         <div className="flex items-center gap-2">
                             <Flame className="h-6 w-6 text-orange-500" />
                             <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-                                {selectedCategory 
+                                {selectedCategory
                                     ? `${categories.find(c => c.id === selectedCategory)?.name || 'Filtered'} Collection`
                                     : 'Trending Products'}
                             </h2>
@@ -513,41 +511,37 @@ const UserHomePage = () => {
                     <div className="flex flex-wrap items-center gap-2">
                         <button
                             onClick={() => setActiveFilter('all')}
-                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                                activeFilter === 'all'
+                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${activeFilter === 'all'
                                     ? 'bg-foreground text-background'
                                     : 'bg-muted text-muted-foreground hover:text-foreground'
-                            }`}
+                                }`}
                         >
                             All
                         </button>
                         <button
                             onClick={() => setActiveFilter('under100')}
-                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                                activeFilter === 'under100'
+                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${activeFilter === 'under100'
                                     ? 'bg-foreground text-background'
                                     : 'bg-muted text-muted-foreground hover:text-foreground'
-                            }`}
+                                }`}
                         >
                             Under $100
                         </button>
                         <button
                             onClick={() => setActiveFilter('topRated')}
-                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                                activeFilter === 'topRated'
+                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${activeFilter === 'topRated'
                                     ? 'bg-foreground text-background'
                                     : 'bg-muted text-muted-foreground hover:text-foreground'
-                            }`}
+                                }`}
                         >
                             Premium Pick
                         </button>
                         <button
                             onClick={() => setActiveFilter('inStock')}
-                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                                activeFilter === 'inStock'
+                            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${activeFilter === 'inStock'
                                     ? 'bg-foreground text-background'
                                     : 'bg-muted text-muted-foreground hover:text-foreground'
-                            }`}
+                                }`}
                         >
                             In Stock Only
                         </button>
@@ -626,11 +620,10 @@ const UserHomePage = () => {
                                             onClick={(e) => handleToggleWishlist(e, product)}
                                             disabled={isFavLoading}
                                             aria-label="Save to wishlist"
-                                            className={`absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all shadow-md ${
-                                                isFav 
-                                                    ? 'bg-rose-500 text-white' 
+                                            className={`absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all shadow-md ${isFav
+                                                    ? 'bg-rose-500 text-white'
                                                     : 'bg-white/80 dark:bg-slate-900/80 text-foreground hover:scale-110'
-                                            }`}
+                                                }`}
                                         >
                                             <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
                                         </button>
@@ -679,11 +672,10 @@ const UserHomePage = () => {
                                                 type="button"
                                                 onClick={(e) => handleAddToCart(e, product)}
                                                 disabled={isAdding}
-                                                className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-sm ${
-                                                    isAdded
+                                                className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-sm ${isAdded
                                                         ? 'bg-emerald-600 text-white'
                                                         : 'bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95'
-                                                }`}
+                                                    }`}
                                             >
                                                 {isAdding ? (
                                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -754,7 +746,7 @@ const UserHomePage = () => {
                             Scale Your Business with ShopStack Pro
                         </h2>
                         <p className="max-w-2xl text-slate-300 text-sm md:text-base leading-relaxed">
-                            Join over 500+ verified merchants. List products, track real-time revenue analytics, 
+                            Join over 500+ verified merchants. List products, track real-time revenue analytics,
                             manage orders with 1-click fulfillment, and receive automated payouts with zero upfront fees.
                         </p>
                         <div className="flex flex-wrap items-center gap-4 pt-2">
