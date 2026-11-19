@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 import HomePage from './pages/HomePage';
 import ProductListingPage from './pages/ProductListingPage';
@@ -21,7 +22,6 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  console.log('ProtectedRoute check:', { hasUser: !!user, loading, requiredRoles: roles });
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center">
@@ -30,82 +30,106 @@ const ProtectedRoute = ({ children, roles }) => {
   );
 
   if (!user) {
-    console.warn('ProtectedRoute: No user found, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (roles && !roles.some(role => user.roles?.includes(role))) {
-    console.warn('ProtectedRoute: User does not have required roles:', roles);
     return <Navigate to="/" replace />;
   }
 
   return children;
 };
 
+// StoreLayout: standard store pages with Navbar, container padding, and Footer
+const StoreLayout = ({ children }) => (
+  <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
+    <div>
+      <Navbar />
+      <main className="container mx-auto px-4 py-8">
+        {children}
+      </main>
+    </div>
+    <Footer />
+  </div>
+);
+
+// AuthLayout: full-screen split-screen auth pages with Navbar on top and Footer at bottom
+const AuthLayout = ({ children }) => (
+  <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
+    <Navbar />
+    <main className="flex-1">
+      {children}
+    </main>
+    <Footer />
+  </div>
+);
+
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-background text-foreground">
-          <Navbar />
-          <main className="container mx-auto px-4 py-8">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/products" element={<ProductListingPage />} />
-              <Route path="/products/:id" element={<ProductDetailsPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Routes>
+          {/* Isolated Dashboard Portals (no store Navbar/Footer; use own full-height sidebar layout) */}
+          <Route path="/admin/*" element={
+            <ProtectedRoute roles={['ROLE_ADMIN']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
 
-              <Route path="/cart" element={
-                <ProtectedRoute>
-                  <CartPage />
-                </ProtectedRoute>
-              } />
+          <Route path="/seller/*" element={
+            <ProtectedRoute roles={['ROLE_SELLER']}>
+              <SellerDashboard />
+            </ProtectedRoute>
+          } />
 
-              <Route path="/checkout" element={
-                <ProtectedRoute>
-                  <CheckoutPage />
-                </ProtectedRoute>
-              } />
+          {/* Full-screen Split Auth Routes */}
+          <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
+          <Route path="/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
+          <Route path="/forgot-password" element={<AuthLayout><ForgotPasswordPage /></AuthLayout>} />
+          <Route path="/reset-password" element={<AuthLayout><ResetPasswordPage /></AuthLayout>} />
 
-              <Route path="/orders" element={
-                <ProtectedRoute>
-                  <OrdersPage />
-                </ProtectedRoute>
-              } />
+          {/* Public Storefront Routes */}
+          <Route path="/" element={<StoreLayout><HomePage /></StoreLayout>} />
+          <Route path="/products" element={<StoreLayout><ProductListingPage /></StoreLayout>} />
+          <Route path="/products/:id" element={<StoreLayout><ProductDetailsPage /></StoreLayout>} />
 
-              <Route path="/wishlist" element={
-                <ProtectedRoute>
-                  <WishlistPage />
-                </ProtectedRoute>
-              } />
+          {/* Protected Customer Routes */}
+          <Route path="/cart" element={
+            <ProtectedRoute>
+              <StoreLayout><CartPage /></StoreLayout>
+            </ProtectedRoute>
+          } />
 
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              } />
+          <Route path="/checkout" element={
+            <ProtectedRoute>
+              <StoreLayout><CheckoutPage /></StoreLayout>
+            </ProtectedRoute>
+          } />
 
-              <Route path="/admin/*" element={
-                <ProtectedRoute roles={['ROLE_ADMIN']}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              } />
+          <Route path="/orders" element={
+            <ProtectedRoute>
+              <StoreLayout><OrdersPage /></StoreLayout>
+            </ProtectedRoute>
+          } />
 
-              <Route path="/seller/*" element={
-                <ProtectedRoute roles={['ROLE_SELLER']}>
-                  <SellerDashboard />
-                </ProtectedRoute>
-              } />
-            </Routes>
-          </main>
-        </div>
+          <Route path="/wishlist" element={
+            <ProtectedRoute>
+              <StoreLayout><WishlistPage /></StoreLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <StoreLayout><ProfilePage /></StoreLayout>
+            </ProtectedRoute>
+          } />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </Router>
     </AuthProvider>
   );
 }
-
 
 export default App;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import DashboardLayout from '../components/DashboardLayout';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -162,8 +163,14 @@ const SellerDashboard = () => {
     );
 
     return (
-        <div className="flex flex-col gap-8 pb-20 relative">
-            {/* Notification Toast */}
+        <DashboardLayout
+            role="seller"
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            pageTitle={`Merchant Hub — ${activeTab === 'overview' ? 'Overview' : activeTab === 'products' ? 'My Products' : 'Orders'}`}
+        >
+            <div className="flex flex-col gap-8 pb-12 relative max-w-7xl mx-auto">
+                {/* Notification Toast */}
             {notification && (
                 <div className={`fixed top-4 right-4 z-[100] animate-in fade-in slide-in-from-top-4 duration-300`}>
                     <div className={`rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-3 border ${notification.type === 'error' ? 'bg-red-50 border-red-100 text-red-600' : 'bg-green-50 border-green-100 text-green-600'
@@ -467,7 +474,8 @@ const SellerDashboard = () => {
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+        </DashboardLayout>
     );
 };
 
